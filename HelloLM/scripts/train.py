@@ -262,21 +262,32 @@ def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
 
     fig.add_trace(
         go.Scatter(
-            x=tokens_seen, y=train_losses, name="Training Loss (Tokens)", opacity=0
+            x=tokens_seen,
+            y=train_losses,
+            name="Training Loss (Tokens)",
+            visible="legendonly",
         ),
-        secondary_y=True,
+        secondary_y=False,
     )
 
+    # Update axes
     fig.update_xaxes(title_text="Epochs", showgrid=True)
     fig.update_yaxes(title_text="Loss", secondary_y=False)
-    fig.update_xaxes(
-        title_text="Tokens Seen", secondary_y=True, overlaying="x", side="top"
-    )
 
     fig.update_layout(
         title="Training and Validation Loss",
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        annotations=[
+            dict(
+                x=0.5,
+                y=1.05,
+                xref="paper",
+                yref="paper",
+                text=f"Total Tokens Seen: {max(tokens_seen):,}",
+                showarrow=False,
+            )
+        ],
     )
 
     fig.write_html("training_validation_loss.html")
