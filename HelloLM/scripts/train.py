@@ -107,13 +107,16 @@ def train(
 
     checkpoint_queue = deque(maxlen=5)
 
+    # create ckpts dir
+    os.makedirs("ckpts", exist_ok=True)
+
     for epoch_num in range(target_epochs):
         model.train()
 
         for input_batch, target_batch in train_dataloader:
             if os.path.exists("stop.txt"):
                 print("Stop signal detected. Saving checkpoint and stopping training.")
-                torch.save(model.state_dict(), f'ckpts/ep-{epoch_num}_step-{step}.pth')
+                torch.save(model.state_dict(), f"ckpts/ep-{epoch_num}_step-{step}.pth")
                 return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
             optimizer.zero_grad()
@@ -125,7 +128,7 @@ def train(
 
             # Backup checkpoint every 200 steps
             if step % 200 == 0:
-                checkpoint_path = f'ckpts/backup_ep-{epoch_num}_step-{step}.pth'
+                checkpoint_path = f"ckpts/backup_ep-{epoch_num}_step-{step}.pth"
                 torch.save(model.state_dict(), checkpoint_path)
                 checkpoint_queue.append(checkpoint_path)
 
@@ -153,7 +156,7 @@ def train(
                 )
 
         generate_and_print_sample(model, tokenizer, device, test_output_context)
-        torch.save(model.state_dict(), f'ckpts/ep-{epoch_num}.pth')
+        torch.save(model.state_dict(), f"ckpts/ep-{epoch_num}.pth")
 
     return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
@@ -179,7 +182,7 @@ def _main(model_config, train_config):
         weight_decay=train_config["weight_decay"],
     )
 
-    print('creating dataloader')
+    print("creating dataloader")
 
     # load dataset
     train_dataloader = create_dataloader(
@@ -211,12 +214,16 @@ def _main(model_config, train_config):
         cache_path=train_config["dataset_cache_path"],
     )
 
-    print('created dataloader')
+    print("created dataloader")
+
+    print(
+        f"About {train_dataloader.dataset.total_samples / train_dataloader.batch_size} steps a epoch"
+    )
 
     # tokenizer for test output
     tokenizer = create_tokenizer()
 
-    print('start training')
+    print("start training")
 
     trace_train_loss, trace_validation_loss, trace_tokens_seen = train(
         model,
@@ -231,7 +238,7 @@ def _main(model_config, train_config):
         tokenizer=tokenizer,
     )
 
-    print('finished training')
+    print("finished training")
 
     return trace_train_loss, trace_validation_loss, trace_tokens_seen, model
 
@@ -293,4 +300,4 @@ if __name__ == "__main__":
     )
 
     # save model
-    torch.save(model.state_dict(), 'model.pth')
+    torch.save(model.state_dict(), "model.pth")

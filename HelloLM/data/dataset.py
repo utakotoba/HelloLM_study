@@ -97,7 +97,7 @@ class HelloDataset(Dataset):
             # calculate valid sample number
             self.total_samples = sum(len(item) for item in self.datasets)
 
-            print(self.total_samples)
+            print(f'Total samples is: {self.total_samples}')
 
             if self.total_samples == 0:
                 raise ValueError("No any valid entries in given parquet file(s)")
