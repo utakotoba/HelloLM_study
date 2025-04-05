@@ -13,4 +13,5 @@ TRAIN_CONFIG = {
     "target_epochs": 10,
     "batch_size": 4,
     "weight_decay": 0.1,
+    "dataset_cache_path": "dataset_cache"
 }

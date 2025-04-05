@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from HelloLM.data.dataset import HelloDataset
 from HelloLM.data.tokenizer import create_tokenizer
 
+
 def collate_fn(batch):
     inputs, targets = zip(*batch)
     inputs = [seq.clone().detach() for seq in inputs]
@@ -10,6 +11,7 @@ def collate_fn(batch):
     padded_inputs = pad_sequence(inputs, batch_first=True, padding_value=0)
     padded_targets = pad_sequence(targets, batch_first=True, padding_value=0)
     return padded_inputs, padded_targets
+
 
 def create_dataloader(
     payload: str | list,
@@ -20,12 +22,16 @@ def create_dataloader(
     shuffle=True,
     drop_last=True,
     num_workers=0,
+    use_cache=True,
+    cache_path="dataset_cache",
 ):
     # create tokenizer
     tokenizer = create_tokenizer()
 
     # build dataset
-    dataset = HelloDataset(payload, column_name, tokenizer, max_length, stride)
+    dataset = HelloDataset(
+        payload, column_name, tokenizer, max_length, stride, use_cache, cache_path
+    )
 
     # create dataloader
     dataloader = DataLoader(
@@ -35,7 +41,7 @@ def create_dataloader(
         drop_last=drop_last,
         num_workers=num_workers,
         collate_fn=collate_fn,
-        pin_memory=True
+        pin_memory=True,
     )
 
     return dataloader

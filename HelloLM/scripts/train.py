@@ -1,14 +1,14 @@
+import os
 import torch
+import plotly.graph_objects as go
+from collections import deque
 from torch.utils.data import DataLoader
 from importlib.metadata import version
 from HelloLM.data.loader import create_dataloader
 from HelloLM.data.tokenizer import create_tokenizer
 from HelloLM.model.model import HelloModel, simple_generate
 from HelloLM.config import MODEL_CONFIG, TRAIN_CONFIG
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import os
-from collections import deque
 
 
 def text_to_token_ids(text, tokenizer):
@@ -194,6 +194,8 @@ def _main(model_config, train_config):
         drop_last=True,
         shuffle=True,
         num_workers=2,
+        use_cache=True,
+        cache_path=train_config["dataset_cache_path"],
     )
 
     validation_dataloader = create_dataloader(
@@ -205,6 +207,8 @@ def _main(model_config, train_config):
         drop_last=True,
         shuffle=True,
         num_workers=0,
+        use_cache=True,
+        cache_path=train_config["dataset_cache_path"],
     )
 
     print('created dataloader')
