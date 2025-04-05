@@ -103,7 +103,7 @@ def train(
     tokens_seen = 0
     step = -1
 
-    for epochs_num in range(target_epochs):
+    for epoch_num in range(target_epochs):
         model.train()
 
         for input_batch, target_batch in train_dataloader:
@@ -127,11 +127,12 @@ def train(
                 trace_tokens_seen.append(tokens_seen)
                 # trace information
                 print(
-                    f"Epoch {epochs_num + 1} [Step {step:06d}]: "
+                    f"Epoch {epoch_num + 1} [Step {step:06d}]: "
                     f"Train loss {train_loss:.4f}, Validation loss {validation_loss:.4f}"
                 )
 
         generate_and_print_sample(model, tokenizer, device, test_output_context)
+        torch.save(model.state_dict, f'ckpts/ep-{epoch_num}.pth')
 
     return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
