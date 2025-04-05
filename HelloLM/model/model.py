@@ -44,7 +44,7 @@ class HelloModel(nn.Module):
         if self.training:
             chunk_size = 2
             num_segments = len(self.transformers) // chunk_size
-            payload = checkpoint_sequential(self.transformers, num_segments, payload)
+            payload = checkpoint_sequential(self.transformers, num_segments, payload, use_reentrant=False)
         else:
             payload = self.transformers(payload)
             

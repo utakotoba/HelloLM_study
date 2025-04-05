@@ -244,16 +244,16 @@ def _main(model_config, train_config):
     return trace_train_loss, trace_validation_loss, trace_tokens_seen, model
 
 
-def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
+def plot_losses(steps_seen, tokens_seen, train_losses, val_losses):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     fig.add_trace(
-        go.Scatter(x=epochs_seen, y=train_losses, name="Training Loss (Epochs)"),
+        go.Scatter(x=steps_seen, y=train_losses, name="Training Loss (Epochs)"),
         secondary_y=False,
     )
     fig.add_trace(
         go.Scatter(
-            x=epochs_seen,
+            x=steps_seen,
             y=val_losses,
             name="Validation Loss (Epochs)",
             line=dict(dash="dot"),
@@ -261,18 +261,8 @@ def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
         secondary_y=False,
     )
 
-    fig.add_trace(
-        go.Scatter(
-            x=tokens_seen,
-            y=train_losses,
-            name="Training Loss (Tokens)",
-            visible="legendonly",
-        ),
-        secondary_y=False,
-    )
-
     # Update axes
-    fig.update_xaxes(title_text="Epochs", showgrid=True)
+    fig.update_xaxes(title_text="Steps", showgrid=True)
     fig.update_yaxes(title_text="Loss", secondary_y=False)
 
     fig.update_layout(
@@ -303,9 +293,9 @@ if __name__ == "__main__":
     )
 
     # plot
-    epochs_seen = list(range(len(trace_train_loss)))
+    steps_seen = list(range(len(trace_train_loss))) * 5
     plot_losses(
-        epochs_seen=epochs_seen,
+        steps_seen=steps_seen,
         tokens_seen=trace_tokens_seen,
         train_losses=trace_train_loss,
         val_losses=trace_validation_loss,
