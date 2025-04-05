@@ -1,6 +1,9 @@
 # dataset
 /data
 
+# train
+stop.txt
+
 # os
 .DS_Store
 

@@ -117,6 +117,7 @@ def train(
             if os.path.exists("stop.txt"):
                 print("Stop signal detected. Saving checkpoint and stopping training.")
                 torch.save(model.state_dict(), f"ckpts/ep-{epoch_num}_step-{step}.pth")
+                os.remove("stop.txt")
                 return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
             optimizer.zero_grad()
