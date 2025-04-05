@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from HelloLM.model.architecture.transformer import Transformer
 from HelloLM.model.layers.normalize import NormalizeLayer
+from torch.utils.checkpoint import checkpoint_sequential
 
 
 class HelloModel(nn.Module):
@@ -39,7 +40,14 @@ class HelloModel(nn.Module):
             torch.arange(sequence_length, device=payload.device)
         )
         payload = self.dropout(payload)
-        payload = self.transformers(payload)
+        
+        if self.training:
+            chunk_size = 2
+            num_segments = len(self.transformers) // chunk_size
+            payload = checkpoint_sequential(self.transformers, num_segments, payload)
+        else:
+            payload = self.transformers(payload)
+            
         payload = self.normalize(payload)
         payload = self.output(payload)
         return payload
@@ -48,7 +56,6 @@ def simple_generate(model, index, max_new_tokens, context_size):
     for _ in range(max_new_tokens):
         index_cond = index[:, -context_size:]
 
-        # Get the predictions
         with torch.no_grad():
             logits = model(index_cond)
 

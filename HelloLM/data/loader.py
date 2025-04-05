@@ -34,7 +34,8 @@ def create_dataloader(
         shuffle=shuffle,
         drop_last=drop_last,
         num_workers=num_workers,
-        collate_fn=collate_fn
+        collate_fn=collate_fn,
+        pin_memory=True
     )
 
     return dataloader

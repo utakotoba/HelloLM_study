@@ -172,7 +172,7 @@ def _main(model_config, train_config):
         stride=model_config["context_length"],
         drop_last=True,
         shuffle=True,
-        num_workers=0,
+        num_workers=2,
     )
 
     validation_dataloader = create_dataloader(
