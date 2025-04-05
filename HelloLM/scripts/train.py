@@ -7,6 +7,8 @@ from HelloLM.model.model import HelloModel, simple_generate
 from HelloLM.config import MODEL_CONFIG, TRAIN_CONFIG
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import os
+from collections import deque
 
 
 def text_to_token_ids(text, tokenizer):
@@ -103,16 +105,35 @@ def train(
     tokens_seen = 0
     step = -1
 
+    checkpoint_queue = deque(maxlen=5)
+
     for epoch_num in range(target_epochs):
         model.train()
 
         for input_batch, target_batch in train_dataloader:
+            if os.path.exists("stop.txt"):
+                print("Stop signal detected. Saving checkpoint and stopping training.")
+                torch.save(model.state_dict(), f'ckpts/ep-{epoch_num}_step-{step}.pth')
+                return trace_train_loss, trace_validation_loss, trace_tokens_seen
+
             optimizer.zero_grad()
             loss = calc_loss_batch(input_batch, target_batch, model, device)
             loss.backward()
             optimizer.step()
             tokens_seen += input_batch.numel()
             step += 1
+
+            # Backup checkpoint every 200 steps
+            if step % 200 == 0:
+                checkpoint_path = f'ckpts/backup_ep-{epoch_num}_step-{step}.pth'
+                torch.save(model.state_dict(), checkpoint_path)
+                checkpoint_queue.append(checkpoint_path)
+
+                # Remove oldest checkpoint if max backups exceeded
+                if len(checkpoint_queue) > checkpoint_queue.maxlen:
+                    oldest_checkpoint = checkpoint_queue.popleft()
+                    if os.path.exists(oldest_checkpoint):
+                        os.remove(oldest_checkpoint)
 
             if step % evaluation_step == 0:
                 train_loss, validation_loss = evaluate_model(
@@ -127,12 +148,12 @@ def train(
                 trace_tokens_seen.append(tokens_seen)
                 # trace information
                 print(
-                    f"Epoch {epoch_num + 1} [Step {step:06d}]: "
-                    f"Train loss {train_loss:.4f}, Validation loss {validation_loss:.4f}"
+                    f"Epoch {epoch_num + 1} [Step {step:08d}]: "
+                    f"Train loss {train_loss:.5f}, Validation loss {validation_loss:.5f}"
                 )
 
         generate_and_print_sample(model, tokenizer, device, test_output_context)
-        torch.save(model.state_dict, f'ckpts/ep-{epoch_num}.pth')
+        torch.save(model.state_dict(), f'ckpts/ep-{epoch_num}.pth')
 
     return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
