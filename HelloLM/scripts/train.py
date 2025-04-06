@@ -95,28 +95,75 @@ def train(
     evaluation_iter,
     tokenizer,
     test_output_context,
+    start_epoch=0,
+    start_step=0,
+    checkpoint_data=None,
 ):
-    # trace
-    trace_train_loss = []
-    trace_validation_loss = []
-    trace_tokens_seen = []
+    # trace - restore from checkpoint if available
+    trace_train_loss = checkpoint_data.get('train_losses', []) if checkpoint_data else []
+    trace_validation_loss = checkpoint_data.get('val_losses', []) if checkpoint_data else []
+    trace_tokens_seen = checkpoint_data.get('tokens_seen', []) if checkpoint_data else []
 
-    # insight variable
-    tokens_seen = 0
-    step = -1
+    # insight variable - restore from checkpoint or initialize
+    tokens_seen = checkpoint_data.get('total_tokens', 0) if checkpoint_data else 0
+    step = start_step
 
     checkpoint_queue = deque(maxlen=5)
+    
+    # Add existing checkpoints to the queue if resuming
+    if os.path.exists("ckpts"):
+        # Find existing checkpoints and add them to the queue
+        checkpoint_files = []
+        for f in os.listdir("ckpts"):
+            if f.startswith("backup_ep-") and f.endswith(".pth") and not f.endswith(".tmp"):
+                checkpoint_files.append(os.path.join("ckpts", f))
+        
+        # Sort by creation time (newest first) to keep the most recent backups
+        checkpoint_files.sort(key=lambda f: os.path.getmtime(f), reverse=True)
+        
+        # Add the most recent ones to the queue
+        for f in checkpoint_files[:checkpoint_queue.maxlen]:
+            checkpoint_queue.append(f)
+            
+        # Remove any old backups not in the queue
+        for f in checkpoint_files[checkpoint_queue.maxlen:]:
+            print(f"Removing old checkpoint: {f}")
+            try:
+                os.remove(f)
+            except Exception as e:
+                print(f"Failed to remove old checkpoint {f}: {e}")
 
     # create ckpts dir
     os.makedirs("ckpts", exist_ok=True)
 
-    for epoch_num in range(target_epochs):
+    for epoch_num in range(start_epoch, start_epoch + target_epochs):
         model.train()
 
         for input_batch, target_batch in train_dataloader:
             if os.path.exists("stop.txt"):
                 print("Stop signal detected. Saving checkpoint and stopping training.")
-                torch.save(model.state_dict(), f"ckpts/ep-{epoch_num}_step-{step}.pth")
+                try:
+                    checkpoint_path = f"ckpts/ep-{epoch_num}_step-{step}.pth"
+                    temp_path = f"{checkpoint_path}.tmp"
+                    # Save complete checkpoint with training state
+                    checkpoint = {
+                        'epoch': epoch_num,
+                        'step': step,
+                        'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'train_losses': trace_train_loss,
+                        'val_losses': trace_validation_loss,
+                        'tokens_seen': trace_tokens_seen,
+                        'total_tokens': tokens_seen
+                    }
+                    torch.save(checkpoint, temp_path)
+                    if os.path.exists(temp_path):
+                        if os.path.exists(checkpoint_path):
+                            os.remove(checkpoint_path)
+                        os.rename(temp_path, checkpoint_path)
+                        print(f"Saved stop checkpoint to {checkpoint_path}")
+                except Exception as e:
+                    print(f"Error saving stop checkpoint: {e}")
                 os.remove("stop.txt")
                 return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
@@ -130,14 +177,42 @@ def train(
             # Backup checkpoint every 200 steps
             if step % 200 == 0:
                 checkpoint_path = f"ckpts/backup_ep-{epoch_num}_step-{step}.pth"
-                torch.save(model.state_dict(), checkpoint_path)
-                checkpoint_queue.append(checkpoint_path)
+                try:
+                    # Use a more reliable saving method (save to temp file first, then rename)
+                    temp_path = f"{checkpoint_path}.tmp"
+                    # Save complete checkpoint with training state
+                    checkpoint = {
+                        'epoch': epoch_num,
+                        'step': step,
+                        'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'train_losses': trace_train_loss,
+                        'val_losses': trace_validation_loss,
+                        'tokens_seen': trace_tokens_seen,
+                        'total_tokens': tokens_seen
+                    }
+                    torch.save(checkpoint, temp_path)
+                    if os.path.exists(temp_path):
+                        if os.path.exists(checkpoint_path):
+                            os.remove(checkpoint_path)
+                        os.rename(temp_path, checkpoint_path)
+                        print(f"Saved checkpoint to {checkpoint_path}")
+                        checkpoint_queue.append(checkpoint_path)
+                except Exception as e:
+                    print(f"Error saving checkpoint: {e}")
+                    # If temp file exists but rename failed, keep it for manual recovery
+                    if os.path.exists(temp_path):
+                        print(f"Temporary checkpoint file remains at {temp_path}")
 
                 # Remove oldest checkpoint if max backups exceeded
                 if len(checkpoint_queue) > checkpoint_queue.maxlen:
                     oldest_checkpoint = checkpoint_queue.popleft()
                     if os.path.exists(oldest_checkpoint):
-                        os.remove(oldest_checkpoint)
+                        print(f"Removing oldest checkpoint: {oldest_checkpoint}")
+                        try:
+                            os.remove(oldest_checkpoint)
+                        except Exception as e:
+                            print(f"Failed to remove checkpoint {oldest_checkpoint}: {e}")
 
             if step % evaluation_step == 0:
                 train_loss, validation_loss = evaluate_model(
@@ -157,12 +232,34 @@ def train(
                 )
 
         generate_and_print_sample(model, tokenizer, device, test_output_context)
-        torch.save(model.state_dict(), f"ckpts/ep-{epoch_num}.pth")
+        try:
+            # Save epoch checkpoint with the same robust method
+            checkpoint_path = f"ckpts/ep-{epoch_num}.pth"
+            temp_path = f"{checkpoint_path}.tmp"
+            # Save complete checkpoint with training state
+            checkpoint = {
+                'epoch': epoch_num,
+                'step': step,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'train_losses': trace_train_loss,
+                'val_losses': trace_validation_loss,
+                'tokens_seen': trace_tokens_seen,
+                'total_tokens': tokens_seen
+            }
+            torch.save(checkpoint, temp_path)
+            if os.path.exists(temp_path):
+                if os.path.exists(checkpoint_path):
+                    os.remove(checkpoint_path)
+                os.rename(temp_path, checkpoint_path)
+                print(f"Saved epoch checkpoint to {checkpoint_path}")
+        except Exception as e:
+            print(f"Error saving epoch checkpoint: {e}")
 
     return trace_train_loss, trace_validation_loss, trace_tokens_seen
 
 
-def _main(model_config, train_config):
+def _main(model_config, train_config, checkpoint_path=None):
     # check environment
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -182,6 +279,38 @@ def _main(model_config, train_config):
         lr=train_config["learning_rate"],
         weight_decay=train_config["weight_decay"],
     )
+    
+    # Initialize checkpoint variables
+    start_epoch = 0
+    start_step = 0
+    checkpoint_data = None
+    
+    # Load checkpoint if specified
+    if checkpoint_path and os.path.exists(checkpoint_path):
+        print(f"Loading checkpoint: {checkpoint_path}")
+        try:
+            checkpoint = torch.load(checkpoint_path, map_location=device)
+            
+            # Check if it's a complete checkpoint or just model state
+            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                model.load_state_dict(checkpoint['model_state_dict'])
+                optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                start_epoch = checkpoint.get('epoch', 0) + 1  # Start from next epoch
+                start_step = checkpoint.get('step', 0) + 1    # Start from next step
+                checkpoint_data = {
+                    'train_losses': checkpoint.get('train_losses', []),
+                    'val_losses': checkpoint.get('val_losses', []),
+                    'tokens_seen': checkpoint.get('tokens_seen', []),
+                    'total_tokens': checkpoint.get('total_tokens', 0)
+                }
+                print(f"Resuming from epoch {start_epoch}, step {start_step}")
+            else:
+                # Old format, just model state
+                model.load_state_dict(checkpoint)
+                print("Loaded model weights only (no training state)")
+        except Exception as e:
+            print(f"Error loading checkpoint: {e}")
+            print("Starting training from scratch...")
 
     print("creating dataloader")
 
@@ -237,6 +366,9 @@ def _main(model_config, train_config):
         evaluation_iter=1,
         test_output_context="Watching the stars and",
         tokenizer=tokenizer,
+        start_epoch=start_epoch,
+        start_step=start_step,
+        checkpoint_data=checkpoint_data,
     )
 
     print("finished training")
@@ -286,10 +418,23 @@ def plot_losses(steps_seen, tokens_seen, train_losses, val_losses):
 
 if __name__ == "__main__":
     print(f"PyTorch version is {version('torch')}")
+    
+    # Check for checkpoint argument
+    import sys
+    checkpoint_path = None
+    
+    # Parse command line arguments for checkpoint path
+    if len(sys.argv) > 1:
+        checkpoint_path = sys.argv[1]
+        if not os.path.exists(checkpoint_path):
+            print(f"Warning: Checkpoint file {checkpoint_path} not found")
+            checkpoint_path = None
+        else:
+            print(f"Will resume training from: {checkpoint_path}")
 
     # training
     trace_train_loss, trace_validation_loss, trace_tokens_seen, model = _main(
-        model_config=MODEL_CONFIG, train_config=TRAIN_CONFIG
+        model_config=MODEL_CONFIG, train_config=TRAIN_CONFIG, checkpoint_path=checkpoint_path
     )
 
     # plot
@@ -301,5 +446,21 @@ if __name__ == "__main__":
         val_losses=trace_validation_loss,
     )
 
-    # save model
-    torch.save(model.state_dict(), "model.pth")
+    # save model with robust method
+    try:
+        temp_path = "model.pth.tmp"
+        # Save as complete checkpoint
+        checkpoint = {
+            'model_state_dict': model.state_dict(),
+            'train_losses': trace_train_loss,
+            'val_losses': trace_validation_loss,
+            'tokens_seen': trace_tokens_seen
+        }
+        torch.save(checkpoint, temp_path)
+        if os.path.exists(temp_path):
+            if os.path.exists("model.pth"):
+                os.remove("model.pth")
+            os.rename(temp_path, "model.pth")
+            print("Saved final model to model.pth")
+    except Exception as e:
+        print(f"Error saving final model: {e}")
