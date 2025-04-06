@@ -293,8 +293,32 @@ def _main(model_config, train_config, checkpoint_path=None):
             
             # Check if it's a complete checkpoint or just model state
             if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                # Load model state
                 model.load_state_dict(checkpoint['model_state_dict'])
-                optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                
+                # Free memory before loading optimizer state
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    print(f"GPU memory before loading optimizer: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+                
+                # Load optimizer state with CPU tensors first
+                optimizer_state = checkpoint['optimizer_state_dict']
+                
+                # Move optimizer state to CPU first to avoid OOM
+                cpu_optimizer_state = {}
+                for k, v in optimizer_state.items():
+                    if isinstance(v, dict):
+                        cpu_optimizer_state[k] = {}
+                        for state_k, state_v in v.items():
+                            if isinstance(state_v, torch.Tensor):
+                                cpu_optimizer_state[k][state_k] = state_v.cpu()
+                            else:
+                                cpu_optimizer_state[k][state_k] = state_v
+                    else:
+                        cpu_optimizer_state[k] = v
+                optimizer.load_state_dict(cpu_optimizer_state)
+                
+                # Extract training progress data
                 start_epoch = checkpoint.get('epoch', 0) + 1  # Start from next epoch
                 start_step = checkpoint.get('step', 0) + 1    # Start from next step
                 checkpoint_data = {
@@ -303,6 +327,10 @@ def _main(model_config, train_config, checkpoint_path=None):
                     'tokens_seen': checkpoint.get('tokens_seen', []),
                     'total_tokens': checkpoint.get('total_tokens', 0)
                 }
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    print(f"GPU memory after loading optimizer: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
                 print(f"Resuming from epoch {start_epoch}, step {start_step}")
             else:
                 # Old format, just model state
