@@ -16,7 +16,7 @@ def setup_logger(disable_log_to_file: bool, log_file_path: str, log_file_split: 
     # message logger to stdout and stderr
     logger.add(
         sys.stdout,
-        format="<d><g>{time:YYYY-MM-DD HH:mm:ss}</g></d> | <d><g>{file.name}:{function}:{line}</g></d> | <g>{level}</g> | {message}",
+        format="<d><g>{time:YYYY-MM-DD HH:mm:ss}</g></d> | <d><g>{file.name}:{function}:{line}</g></d> | <d><g>{level}</g></d> | <d><g>{message}</g></d>",
         colorize=True,
         filter=lambda record: record["level"].name == "INFO",
     )
