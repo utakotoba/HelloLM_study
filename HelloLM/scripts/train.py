@@ -132,6 +132,9 @@ def train(
                 os.remove(f)
             except Exception as e:
                 print(f"Failed to remove old checkpoint {f}: {e}")
+    
+    # state
+    print(f'The checkpoint queue has {len(checkpoint_queue)} checkpoints initialized')
 
     # create ckpts dir
     os.makedirs("ckpts", exist_ok=True)
@@ -178,9 +181,7 @@ def train(
             if step % 200 == 0:
                 checkpoint_path = f"ckpts/backup_ep-{epoch_num}_step-{step}.pth"
                 try:
-                    # Use a more reliable saving method (save to temp file first, then rename)
                     temp_path = f"{checkpoint_path}.tmp"
-                    # Save complete checkpoint with training state
                     checkpoint = {
                         'epoch': epoch_num,
                         'step': step,
@@ -200,13 +201,12 @@ def train(
                         checkpoint_queue.append(checkpoint_path)
                 except Exception as e:
                     print(f"Error saving checkpoint: {e}")
-                    # If temp file exists but rename failed, keep it for manual recovery
                     if os.path.exists(temp_path):
                         print(f"Temporary checkpoint file remains at {temp_path}")
 
-                # Remove oldest checkpoint if max backups exceeded
                 if len(checkpoint_queue) > checkpoint_queue.maxlen:
                     oldest_checkpoint = checkpoint_queue.popleft()
+                    print(f'Checkpoint queue is full, removing {oldest_checkpoint}')
                     if os.path.exists(oldest_checkpoint):
                         print(f"Removing oldest checkpoint: {oldest_checkpoint}")
                         try:
