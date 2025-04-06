@@ -24,6 +24,7 @@ def create_dataloader(
     num_workers=0,
     use_cache=True,
     cache_path="dataset_cache",
+    return_dataset=False,
 ):
     # create tokenizer
     tokenizer = create_tokenizer()
@@ -32,6 +33,10 @@ def create_dataloader(
     dataset = HelloDataset(
         payload, column_name, tokenizer, max_length, stride, use_cache, cache_path
     )
+    
+    # Return just the dataset if requested (used for distributed training)
+    if return_dataset:
+        return dataset
 
     # create dataloader
     dataloader = DataLoader(

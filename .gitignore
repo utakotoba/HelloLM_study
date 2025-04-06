@@ -3,6 +3,10 @@
 
 # train
 stop.txt
+logs
+
+# development
+*.dummy.*
 
 # os
 .DS_Store
