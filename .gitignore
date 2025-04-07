@@ -6,6 +6,7 @@ stop.txt
 logs
 ckpts
 cache
+plots
 
 # development
 *.dummy.*
