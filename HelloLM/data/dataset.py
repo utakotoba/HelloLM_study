@@ -67,6 +67,7 @@ class HelloDataset(Dataset):
 
         # cache path
         cache_key = self._generate_cache_key(payload, column_name, max_length, stride)
+        ensure_directory(os.path.join(cache_path, 'datasets'))
         cache_path = os.path.join(cache_path, f'datasets/{cache_key}.pt')
 
         # loop all entries to include all datasets
@@ -116,7 +117,6 @@ class HelloDataset(Dataset):
             # save processed dataset
             if use_cache:
                 logger.info(f'Saving dataset to cache: {cache_path}')
-                ensure_directory(cache_path)
                 
                 save({
                     "datasets": self.datasets,
