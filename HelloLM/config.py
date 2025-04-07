@@ -76,7 +76,7 @@ TRAIN_CONFIG: TrainConfig = {
         "data/wikitext/train-00001-of-00002.parquet",
     ],
     "train_datasets_column_name": "text",
-    "validation_datasets_path": "data/wikitext/validation-00000-of-00002.parquet",
+    "validation_datasets_path": "data/wikitext/validation-00000-of-00001.parquet",
     "validation_datasets_column_name": "text",
     "dataloader_workers_num": 2,
     "distributed": False,

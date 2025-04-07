@@ -640,6 +640,7 @@ def train_unit(
     )
 
     # load dataset
+    logger.info("Loading datasets...")
     train_dataloader = create_dataloader(
         payload=train_config["train_datasets_path"],
         column_name=train_config["train_datasets_column_name"],
