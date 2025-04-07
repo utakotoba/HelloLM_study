@@ -717,7 +717,7 @@ def train_unit(
     checkpoint = None
 
     # load checkpoint file
-    resolved_ckpt_path = to_abs_path(ckpt_path)
+    resolved_ckpt_path = to_abs_path(ckpt_path) if ckpt_path else None
     if ckpt_path and os.path.exists(resolved_ckpt_path):
         logger.info(f"Loading checkpoint file: {ckpt_path}")
         try:
