@@ -854,7 +854,8 @@ def train_worker(
     rank: int, model_config: ModelConfig, train_config: TrainConfig, ckpt_path: str
 ):
     # setup distributed environment
-    setup_distributed(rank=rank, world_size=train_config["world_size"])
+    if train_config['distributed']:
+        setup_distributed(rank=rank, world_size=train_config["world_size"])
 
     # call train unit
     trace_train_loss, trace_validation_loss, trace_tokens_seen, model = train_unit(
