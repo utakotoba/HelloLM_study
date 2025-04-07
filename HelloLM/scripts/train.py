@@ -418,8 +418,9 @@ def _train(
                     index + 1
                 ) == len(train_dataloader):
                     # clip gradients to avoid explosion
+                    total_norm = torch.nn.utils.get_total_norm(model.parameters())
                     torch.nn.utils.clip_grads_with_norm_(
-                        model.parameters(), max_norm=1.0
+                        model.parameters(), max_norm=1.0, total_norm=total_norm
                     )
 
                     # unscale before optimizer
@@ -448,8 +449,9 @@ def _train(
                 if (index + 1) % train_config["gradient_accumulation_steps"] == 0 or (
                     index + 1
                 ) == len(train_dataloader):
+                    total_norm = torch.nn.utils.get_total_norm(model.parameters())
                     torch.nn.utils.clip_grads_with_norm_(
-                        model.parameters(), max_norm=1.0
+                        model.parameters(), max_norm=1.0, total_norm=total_norm
                     )
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
@@ -720,7 +722,9 @@ def train_unit(
     if ckpt_path and os.path.exists(resolved_ckpt_path):
         logger.info(f"Loading checkpoint file: {ckpt_path}")
         try:
-            checkpoint = torch.load(resolved_ckpt_path, map_location=device, weights_only=False)
+            checkpoint = torch.load(
+                resolved_ckpt_path, map_location=device, weights_only=False
+            )
 
             # check if the checkpoint is a complete checkpoint or just weights
             if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
@@ -871,7 +875,7 @@ def train_worker(
         model_config=model_config,
         train_config=train_config,
         rank=rank,
-        ckpt_path=ckpt_path
+        ckpt_path=ckpt_path,
     )
 
     if rank == 0 or not train_config["distributed"]:
