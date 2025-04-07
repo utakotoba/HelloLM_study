@@ -51,7 +51,7 @@ def log_env_metadata(debug=False):
         log(f'-- CUDA runtime version: {torch.version.cuda}')
         log(f'Total memory: {torch.cuda.memory_summary}')
     
-    if torch.mps.is_available():
+    if torch.backends.mps.is_available():
         log("macOS MPS is available")
         log(f"-- Number of MPS devices: {torch.backends.mps.device_count()}")
         log(f'-- Recommended allocatable memory {torch.mps.recommended_max_memory() / (1024 ** 3)} GB')
