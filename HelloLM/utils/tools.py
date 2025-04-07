@@ -53,7 +53,7 @@ def log_env_metadata(debug=False):
     
     if torch.mps.is_available():
         log("macOS MPS is available")
-        log(f"-- Number of MPS devices: {torch.mps.device_count()}")
+        log(f"-- Number of MPS devices: {torch.backends.mps.device_count()}")
         log(f'-- Recommended allocatable memory {torch.mps.recommended_max_memory() / (1024 ** 3)} GB')
 
     if torch.cpu.is_available():

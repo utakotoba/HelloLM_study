@@ -613,7 +613,7 @@ def train_unit(
         if torch.cuda.is_available():
             device = torch.device("cuda")
             logger.info("CUDA is ready to use")
-        elif torch.mps.is_available():
+        elif torch.backends.mps.is_available():
             device = torch.device("mps")
             logger.info("macOS MPS is ready to use")
         elif torch.cpu.is_available():
@@ -870,6 +870,7 @@ def train_worker(
         model_config=model_config,
         train_config=train_config,
         rank=rank,
+        ckpt_path=ckpt_path
     )
 
     if rank == 0 or not train_config["distributed"]:
