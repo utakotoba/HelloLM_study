@@ -4,6 +4,7 @@ import pandas as pd
 from tiktoken import Encoding
 from torch import tensor, save, load
 from torch.utils.data import Dataset
+from HelloLM.utils.logger import logger
 
 
 class DatasetUnit(Dataset):
@@ -37,6 +38,7 @@ class DatasetUnit(Dataset):
 
 
 class HelloDataset(Dataset):
+    @logger.catch
     def __init__(
         self,
         payload: str | list,
@@ -64,28 +66,30 @@ class HelloDataset(Dataset):
 
         # cache path
         cache_key = self._generate_cache_key(payload, column_name, max_length, stride)
-        cache_path = os.path.join(cache_path, f'dataset_{cache_key}.pt')
+        cache_path = os.path.join(cache_path, f'datasets/{cache_key}.pt')
 
         # loop all entries to include all datasets
         if use_cache and os.path.exists(cache_path):
-            print(f'Loading dataset from cache: {cache_path}')
+            logger.info(f'Loading dataset from cache: {cache_path}')
             cache_data = load(cache_path)
             self.datasets = cache_data['datasets']
             self.indices = cache_data['indices']
             self.total_samples = cache_data['total_samples']
-            print(f'Loaded {self.total_samples} samples from cache')
+            logger.info(f'Loaded {self.total_samples} samples from cache')
         else:
             for index, payload_entries in enumerate(payload):
                 data_frame = pd.read_parquet(payload_entries)
 
                 if column_name not in data_frame.columns:
-                    raise ValueError(
+                    logger.error("ERROR in column name resolving")
+                    raise RuntimeError(
                         f"Column '{column_name}' not found in parquet {index}.\n"
                         f"Available columns: {data_frame.columns.to_list()}'"
                     )
 
                 if len(data_frame) == 0:
-                    raise ValueError(f"Parquet {index} contains no rows")
+                    logger.error("No enough data to load")
+                    raise RuntimeError(f"Parquet {index} contains no rows")
 
                 for raw_text in data_frame[column_name]:
                     if isinstance(raw_text, str) and len(raw_text) > 0:
@@ -97,10 +101,10 @@ class HelloDataset(Dataset):
             # calculate valid sample number
             self.total_samples = sum(len(item) for item in self.datasets)
 
-            print(f'Total samples is: {self.total_samples}')
+            logger.info(f'Total samples is: {self.total_samples}')
 
             if self.total_samples == 0:
-                raise ValueError("No any valid entries in given parquet file(s)")
+                raise RuntimeError("No any valid entries in given parquet file(s)")
 
             # build indices
             self.indices = []
@@ -110,7 +114,7 @@ class HelloDataset(Dataset):
             
             # save processed dataset
             if use_cache:
-                print(f'Saving dataset to cache: {cache_path}')
+                logger.info(f'Saving dataset to cache: {cache_path}')
                 save({
                     "datasets": self.datasets,
                     "indices": self.indices,

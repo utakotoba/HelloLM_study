@@ -1,7 +1,7 @@
 import sys
 import datetime
 from loguru import logger
-from HelloLM.utils.path import ensure_directory
+from HelloLM.utils.tools import ensure_directory
 
 
 def generate_log_key():

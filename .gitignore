@@ -4,6 +4,8 @@
 # train
 stop.txt
 logs
+ckpts
+cache
 
 # development
 *.dummy.*

@@ -1,0 +1,64 @@
+2025-04-06 21:04:37.857 | INFO     | __main__:outer_function:17 - Inside outer_function, calling middle_function
+2025-04-06 21:04:37.858 | INFO     | __main__:middle_function:12 - Inside middle_function, calling inner_function
+2025-04-06 21:04:37.858 | INFO     | __main__:inner_function:7 - Inside inner_function
+2025-04-06 21:04:37.858 | ERROR    | __main__:middle_function:13 - An error has been caught in function 'middle_function', process 'MainProcess' (87852), thread 'MainThread' (8814283840):
+Traceback (most recent call last):
+
+  File "/Users/neko/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+           │         │     └ {'__name__': '__main__', '__doc__': None, '__package__': 'HelloLM.scripts', '__loader__': <_frozen_importlib_external.SourceF...
+           │         └ <code object <module> at 0x102a62e40, file "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 1>
+           └ <function _run_code at 0x1029cb2e0>
+  File "/Users/neko/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+         │     └ {'__name__': '__main__', '__doc__': None, '__package__': 'HelloLM.scripts', '__loader__': <_frozen_importlib_external.SourceF...
+         └ <code object <module> at 0x102a62e40, file "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 1>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 21, in <module>
+    outer_function()
+    └ <function outer_function at 0x102fafbe0>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 18, in outer_function
+    middle_function()
+    └ <function middle_function at 0x102faf7f0>
+
+> File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 13, in middle_function
+    inner_function()
+    └ <function inner_function at 0x102faf5b0>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 8, in inner_function
+    raise ValueError("Something went wrong in the inner function")
+
+ValueError: Something went wrong in the inner function
+2025-04-06 21:05:14.947 | INFO     | __main__:outer_function:17 - Inside outer_function, calling middle_function
+2025-04-06 21:05:14.948 | INFO     | __main__:middle_function:12 - Inside middle_function, calling inner_function
+2025-04-06 21:05:14.948 | INFO     | __main__:inner_function:7 - Inside inner_function
+2025-04-06 21:05:14.948 | ERROR    | __main__:middle_function:13 - An error has been caught in function 'middle_function', process 'MainProcess' (87915), thread 'MainThread' (8814283840):
+Traceback (most recent call last):
+
+  File "/Users/neko/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+           │         │     └ {'__name__': '__main__', '__doc__': None, '__package__': 'HelloLM.scripts', '__loader__': <_frozen_importlib_external.SourceF...
+           │         └ <code object <module> at 0x100d1eef0, file "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 1>
+           └ <function _run_code at 0x100c8b2e0>
+  File "/Users/neko/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+         │     └ {'__name__': '__main__', '__doc__': None, '__package__': 'HelloLM.scripts', '__loader__': <_frozen_importlib_external.SourceF...
+         └ <code object <module> at 0x100d1eef0, file "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 1>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 21, in <module>
+    outer_function()
+    └ <function outer_function at 0x1019937f0>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 18, in outer_function
+    middle_function()
+    └ <function middle_function at 0x101993400>
+
+> File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 13, in middle_function
+    inner_function()
+    └ <function inner_function at 0x101993640>
+
+  File "/Users/neko/Workbench/Learning/LLM/HelloLM_V1/HelloLM/scripts/a.py", line 8, in inner_function
+    raise ValueError("Something went wrong in the inner function")
+
+ValueError: Something went wrong in the inner function

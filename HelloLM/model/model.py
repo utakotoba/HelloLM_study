@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
+from HelloLM.config import ModelConfig
 from HelloLM.model.architecture.transformer import Transformer
 from HelloLM.model.layers.normalize import NormalizeLayer
 from torch.utils.checkpoint import checkpoint_sequential
 
 
 class HelloModel(nn.Module):
-    def __init__(self, model_config):
+    def __init__(self, model_config: ModelConfig):
         super().__init__()
         self.token_embedding = nn.Embedding(
             model_config["vocab_size"], model_config["dim_embed"]

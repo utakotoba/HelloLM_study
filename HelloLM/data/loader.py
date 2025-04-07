@@ -1,5 +1,7 @@
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
+from torch.utils.data import DistributedSampler
+from HelloLM.config import ModelConfig, TrainConfig
 from HelloLM.data.dataset import HelloDataset
 from HelloLM.data.tokenizer import create_tokenizer
 
@@ -16,35 +18,44 @@ def collate_fn(batch):
 def create_dataloader(
     payload: str | list,
     column_name: str,
-    batch_size: int,
-    max_length: int,
-    stride: int,
+    model_config: ModelConfig,
+    train_config: TrainConfig,
     shuffle=True,
     drop_last=True,
-    num_workers=0,
     use_cache=True,
-    cache_path="dataset_cache",
-    return_dataset=False,
+    cache_path="cache",
+    rank=-1 # distributed train only
 ):
     # create tokenizer
     tokenizer = create_tokenizer()
 
     # build dataset
     dataset = HelloDataset(
-        payload, column_name, tokenizer, max_length, stride, use_cache, cache_path
+        payload=payload,
+        column_name=column_name,
+        tokenizer=tokenizer,
+        max_length=model_config['context_length'],
+        stride=model_config['context_length'],
+        use_cache=use_cache,
+        cache_path=cache_path,
     )
-    
-    # Return just the dataset if requested (used for distributed training)
-    if return_dataset:
-        return dataset
+
+    # build DistributedSampler
+    if train_config['distributed']:
+        dataset = DistributedSampler(
+            dataset=dataset,
+            num_replicas=train_config['world_size'],
+            rank=rank,
+            shuffle=shuffle
+        )
 
     # create dataloader
     dataloader = DataLoader(
         dataset=dataset,
-        batch_size=batch_size,
+        batch_size=train_config['batch_size_per_device'],
         shuffle=shuffle,
         drop_last=drop_last,
-        num_workers=num_workers,
+        num_workers=train_config['dataloader_workers_num'],
         collate_fn=collate_fn,
         pin_memory=True,
     )
