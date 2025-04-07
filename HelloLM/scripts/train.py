@@ -5,7 +5,6 @@ import math
 import torch
 import plotly.graph_objects as go
 from time import time
-from tqdm import tqdm
 from collections import deque
 from argparse import ArgumentParser
 from plotly.subplots import make_subplots
@@ -363,19 +362,9 @@ def _train(
     batch_times = deque(maxlen=100)
     total_batch_time = 0.0
 
-    epoch_progress = None
     epoch_iter = range(start_epoch, train_config["target_epochs"])
-    if rank == 0 or not train_config["distributed"]:
-        epoch_progress = tqdm(epoch_iter, desc="Training Epochs")
 
-    for epoch in (
-        epoch_iter if rank == 0 or not train_config["distributed"] else epoch_progress
-    ):
-        # setup batch progress bar
-        batch_progress = None
-        if rank == 0 or train_config["distributed"]:
-            batch_progress = tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}")
-
+    for epoch in epoch_iter:
         # reset sampler
         if train_config["distributed"] and hasattr(
             train_dataloader.sampler, "set_epoch"
@@ -470,16 +459,13 @@ def _train(
             total_batch_time += batch_time
 
             # update progress bar
-            if batch_progress is not None:
-                lr_value = optimizer.param_groups[0]["lr"]
-                batch_progress.set_postfix(
-                    {
-                        "loss": running_loss / (index + 1),
-                        "tokens/sec": batch_tokens / batch_time,
-                        "learning rate": lr_value,
-                    }
-                )
-                batch_progress.update(1)
+            lr_value = optimizer.param_groups[0]["lr"]
+            logger.info(
+                f"Step {step}, Epoch {epoch}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
+            )
+            logger.info(
+                f"Loss: {running_loss / (index + 1):.6f}, Tokens/sec: {batch_tokens / batch_time:.2f}, "
+            )
 
             # evaluation
             if step % train_config["evaluation_step"] == 0 and (
@@ -558,9 +544,6 @@ def _train(
                 )
 
         if rank == 0 or train_config["distributed"]:
-            if batch_progress is not None:
-                batch_progress.close()
-
             epoch_time = time() - epoch_start_time
             logger.info(f"Epoch {epoch} completed in {epoch_time:.2f} seconds")
 

@@ -67,6 +67,8 @@ TRAIN_CONFIG: TrainConfig = {
     "gradient_accumulation_steps": 1,
     "use_mixed_precision": True,
     "memory_efficient": True,
+    "evaluation_step": 200,
+    "evaluation_iter": 20,
     "cache_path": "cache",
     "backup_path": "ckpts",
     "max_backup_nums": 5,
