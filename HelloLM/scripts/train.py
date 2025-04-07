@@ -18,8 +18,7 @@ from torch.distributed import (
 )
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
-from torch.cuda.amp import GradScaler
-from torch.amp import autocast
+from torch.amp import autocast, GradScaler
 from HelloLM.config import MODEL_CONFIG, TRAIN_CONFIG
 from HelloLM.config import ModelConfig, TrainConfig
 from HelloLM.utils.logger import logger, setup_logger
