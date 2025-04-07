@@ -77,7 +77,7 @@ class HelloDataset(Dataset):
             self.datasets = cache_data['datasets']
             self.indices = cache_data['indices']
             self.total_samples = cache_data['total_samples']
-            logger.info(f'Loaded {self.total_samples} samples from cache')fp
+            logger.info(f'Loaded {self.total_samples} samples from cache')
         else:
             for index, payload_entries in enumerate(payload):
                 data_frame = pd.read_parquet(payload_entries)
