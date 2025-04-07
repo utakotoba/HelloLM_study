@@ -720,7 +720,7 @@ def train_unit(
     if ckpt_path and os.path.exists(resolved_ckpt_path):
         logger.info(f"Loading checkpoint file: {ckpt_path}")
         try:
-            checkpoint = torch.load(resolved_ckpt_path, map_location=device)
+            checkpoint = torch.load(resolved_ckpt_path, map_location=device, weights_only=False)
 
             # check if the checkpoint is a complete checkpoint or just weights
             if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:

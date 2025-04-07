@@ -73,7 +73,7 @@ class HelloDataset(Dataset):
         # loop all entries to include all datasets
         if use_cache and os.path.exists(cache_path):
             logger.info(f'Loading dataset from cache: {cache_path}')
-            cache_data = load(cache_path)
+            cache_data = load(cache_path, weights_only=False)
             self.datasets = cache_data['datasets']
             self.indices = cache_data['indices']
             self.total_samples = cache_data['total_samples']
