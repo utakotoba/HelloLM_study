@@ -18,7 +18,8 @@ from torch.distributed import (
 )
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import GradScaler
+from torch.amp import autocast
 from HelloLM.config import MODEL_CONFIG, TRAIN_CONFIG
 from HelloLM.config import ModelConfig, TrainConfig
 from HelloLM.utils.logger import logger, setup_logger
@@ -918,7 +919,7 @@ def train_worker(
 def _main(
     model_config: ModelConfig,
     train_config: TrainConfig,
-    ckpt_path: str,
+    ckpt_path,
 ):
     # logging insight
     logger.info(f"Model configuration:\n{json.dumps(MODEL_CONFIG, indent=2)}")
