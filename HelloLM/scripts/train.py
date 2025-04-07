@@ -418,11 +418,12 @@ def _train(
                     # update weights
                     scaler.step(optimizer)
                     scaler.update()
-                    optimizer.zero_grad(set_to_none=True)
 
                     # step LR scheduler
                     if lr_scheduler is not None:
                         lr_scheduler.step()
+                    
+                    optimizer.zero_grad(set_to_none=True)
 
                     update_count += 1
             else:
@@ -443,10 +444,11 @@ def _train(
                         model.parameters(), max_norm=1.0, total_norm=total_norm
                     )
                     optimizer.step()
-                    optimizer.zero_grad(set_to_none=True)
 
                     if lr_scheduler is not None:
                         lr_scheduler.step()
+                    
+                    optimizer.zero_grad(set_to_none=True)
 
                     update_count += 1
 
@@ -458,14 +460,15 @@ def _train(
             batch_times.append(batch_time)
             total_batch_time += batch_time
 
-            # update progress bar
-            lr_value = optimizer.param_groups[0]["lr"]
-            logger.info(
-                f"Step {step}, Epoch {epoch}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
-            )
-            logger.info(
-                f"Loss: {running_loss / (index + 1):.6f}, Tokens/sec: {batch_tokens / batch_time:.2f}, "
-            )
+            # update info
+            if (step % 10 == 0):
+                lr_value = optimizer.param_groups[0]["lr"]
+                logger.info(
+                    f"Step {step}, Epoch {epoch}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
+                )
+                logger.info(
+                    f"Loss: {running_loss / (index + 1):.6f}, Tokens/sec: {batch_tokens / batch_time:.2f}, "
+                )
 
             # evaluation
             if step % train_config["evaluation_step"] == 0 and (
