@@ -5,6 +5,7 @@ from tiktoken import Encoding
 from torch import tensor, save, load
 from torch.utils.data import Dataset
 from HelloLM.utils.logger import logger
+from HelloLM.utils.tools import ensure_directory
 
 
 class DatasetUnit(Dataset):
@@ -115,6 +116,8 @@ class HelloDataset(Dataset):
             # save processed dataset
             if use_cache:
                 logger.info(f'Saving dataset to cache: {cache_path}')
+                ensure_directory(cache_path)
+                
                 save({
                     "datasets": self.datasets,
                     "indices": self.indices,

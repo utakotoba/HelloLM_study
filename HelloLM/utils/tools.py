@@ -13,7 +13,7 @@ def ensure_directory(path: str):
     if not os.path.isabs(path):
         resolved = os.path.join(os.getcwd(), path)
 
-    if not os.path.exists(path):
+    if not os.path.exists(resolved):
         os.makedirs(resolved, exist_ok=True)
 
 @logger.catch
