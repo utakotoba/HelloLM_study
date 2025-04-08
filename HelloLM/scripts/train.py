@@ -512,7 +512,7 @@ def _train(
                                 1024**3
                             )
                             logger.info(
-                                f"CUDA memory: {allocated_mem:.3f}GB allocated, {reserved_mem:.3f}GBN reserved"
+                                f"CUDA memory: {allocated_mem:.3f}GB allocated, {reserved_mem:.3f}GB reserved"
                             )
 
             if step % train_config["backup_steps"] == 0 and (

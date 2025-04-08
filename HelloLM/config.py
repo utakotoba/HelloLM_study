@@ -61,7 +61,7 @@ class TrainConfig(TypedDict):
 TRAIN_CONFIG: TrainConfig = {
     "learning_rate": 5e-4,
     "target_epochs": 2,
-    "batch_size_per_device": 8,
+    "batch_size_per_device": 12,
     "weight_decay": 0.1,
     "warmup_steps": 100,
     "gradient_accumulation_steps": 1,
