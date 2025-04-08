@@ -464,7 +464,7 @@ def _train(
             if (step % 10 == 0):
                 lr_value = optimizer.param_groups[0]["lr"]
                 logger.info(
-                    f"Step {step}, Epoch {epoch}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
+                    f"Step {step}, Epoch {epoch + 1}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
                 )
                 logger.info(
                     f"Loss: {running_loss / (index + 1):.6f}, Tokens/sec: {batch_tokens / batch_time:.2f}, "
@@ -491,7 +491,7 @@ def _train(
 
                 if rank == 0 or not train_config["distributed"]:
                     logger.info(
-                        f"Step {step}, Epoch {epoch}, Updates {update_count}, tokens/sec={sum(batch_times) / len(batch_times)}"
+                        f"Step {step}, Epoch {epoch + 1}, Updates {update_count}, tokens/sec={sum(batch_times) / len(batch_times)}"
                     )
                     logger.info(
                         f"Train Loss {train_loss: 6f}, Val Loss {validation_loss: 6f}"
