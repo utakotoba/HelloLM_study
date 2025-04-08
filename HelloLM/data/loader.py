@@ -41,23 +41,26 @@ def create_dataloader(
     )
 
     # build DistributedSampler
+    sampler = None
     if train_config['distributed']:
-        dataset = DistributedSampler(
+        sampler = DistributedSampler(
             dataset=dataset,
             num_replicas=train_config['world_size'],
             rank=rank,
             shuffle=shuffle
         )
+        shuffle = False
 
     # create dataloader
     dataloader = DataLoader(
         dataset=dataset,
         batch_size=train_config['batch_size_per_device'],
-        shuffle=shuffle,
+        shuffle=shuffle and sampler is not None,
         drop_last=drop_last,
         num_workers=train_config['dataloader_workers_num'],
         collate_fn=collate_fn,
         pin_memory=True,
+        sampler=sampler
     )
 
     return dataloader
