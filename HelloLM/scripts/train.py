@@ -422,7 +422,7 @@ def _train(
                     # step LR scheduler
                     if lr_scheduler is not None:
                         lr_scheduler.step()
-                    
+
                     optimizer.zero_grad(set_to_none=True)
 
                     update_count += 1
@@ -447,7 +447,7 @@ def _train(
 
                     if lr_scheduler is not None:
                         lr_scheduler.step()
-                    
+
                     optimizer.zero_grad(set_to_none=True)
 
                     update_count += 1
@@ -461,7 +461,7 @@ def _train(
             total_batch_time += batch_time
 
             # update info
-            if (step % 10 == 0):
+            if step % 10 == 0:
                 lr_value = optimizer.param_groups[0]["lr"]
                 logger.info(
                     f"Step {step}, Epoch {epoch + 1}, Batch {index + 1}/{len(train_dataloader)}, Learning Rate: {lr_value:.6e}"
@@ -854,7 +854,7 @@ def train_worker(
     rank: int, model_config: ModelConfig, train_config: TrainConfig, ckpt_path: str
 ):
     # setup distributed environment
-    if train_config['distributed']:
+    if train_config["distributed"]:
         setup_distributed(rank=rank, world_size=train_config["world_size"])
 
     # call train unit
@@ -911,6 +911,9 @@ def _main(
     train_config: TrainConfig,
     ckpt_path,
 ):
+    # set torch memory settings
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
     # logging insight
     logger.info(f"Model configuration:\n{json.dumps(MODEL_CONFIG, indent=2)}")
     logger.info(f"Training configuration:\n{json.dumps(TRAIN_CONFIG, indent=2)}")
