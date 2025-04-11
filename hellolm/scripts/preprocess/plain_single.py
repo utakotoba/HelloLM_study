@@ -61,7 +61,7 @@ def combine_texts(bin_item):
     return "\n".join(bin_item[1])
 
 
-def plot_distribution(payload: dict[str, list]):
+def plot_distribution(payload: dict[str, list], run_id: str):
     # build plot titles
     titles = []
     for prefix, _ in payload.items():
@@ -121,8 +121,8 @@ def plot_distribution(payload: dict[str, list]):
         fig.update_yaxes(title_text="Frequency", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
 
     # resolve path and save
-    viz_path = "plots"
-    plots_path = ensure_directory(viz_path) / "token_distribution_histogram.html"
+    viz_path = "plots/preprocessed"
+    plots_path = ensure_directory(viz_path) / f"token_distribution_histogram_{run_id}.html"
     write_html(fig, plots_path)
     logger.success(f"Plots saved to {plots_path}")
 
@@ -133,12 +133,22 @@ def _main(
     prefix: str,
     output_path: str,
     removes: str,
+    run_id: str,
     tokenizer_name: str,
     column_name: str,
     threshold: int,
     target_length: int,
     num_processes: int = None,
 ):
+    # debug insight
+    logger.debug(f"Target inputs path: {inputs}")
+    logger.debug(f"Prefix to match: {prefix}")
+    logger.debug(f"Output path: {output_path}")
+    logger.debug(f"Used tokenizer: {tokenizer_name}")
+    logger.debug(f"Threshold to filter out raw data: {threshold}")
+    logger.debug(f"Target length: {target_length}")
+    logger.debug(f"Using processes: {num_processes}")
+
     # parse arguments
     if isinstance(inputs, str):
         inputs = [inputs]
@@ -244,7 +254,7 @@ def _main(
         pos = remaining_space.bisect_left(token_count)
 
         if pos < len(remaining_space):
-            best_space = remaining_space.keys()[best_bin_idx]
+            best_space = remaining_space.keys()[pos]
             best_bin_idx = remaining_space[best_space][0]
 
             remaining_space[best_space].pop(0)
@@ -281,13 +291,22 @@ def _main(
         + f"{metadata_len / (datetime.now() - pack_start_time).total_seconds()} rows/sec"
     )
 
+    # filter bins that are below 95% of target length
+    min_tokens_threshold = int(target_length * 0.95)
+    original_bin_count = len(bins)
+    bins = [bin for bin in bins if bin[0] >= min_tokens_threshold]
+    filtered_bin_count = original_bin_count - len(bins)
+    logger.info(f"Filtered out {filtered_bin_count} bins below {min_tokens_threshold} tokens (95% of target length)")
+    logger.success(f"Remaining {len(bins)} bins after filtering")
+
     # plot
     logger.info("Plotting grouped token numbers distribution")
     plot_distribution(
         {
             "raw": [item[2] for item in text_metadata],
             "processed": [item[0] for item in bins],
-        }
+        },
+        run_id=run_id
     )
 
     # combine texts
@@ -388,6 +407,7 @@ if __name__ == "__main__":
         inputs=args.input,
         prefix=args.prefix,
         output_path=args.output,
+        run_id=run_id,
         tokenizer_name=args.tokenizer,
         removes=args.removes,
         column_name=args.column,

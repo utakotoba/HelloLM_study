@@ -96,4 +96,11 @@ def setup_logger(
                 resolved_log_file,
                 format=f"{{time:YYYY-MM-DD HH:mm:ss}} | {{level: <8}} | {identifier} {{process}} | {{file.name}}:{{function}}:{{line}} | {{message}}",
                 enqueue=True,
+                filter=lambda record: record['level'].name == "TRACE",
+                level="TRACE"
+            )
+            logger.add(
+                resolved_log_file,
+                format=f"{{time:YYYY-MM-DD HH:mm:ss}} | {{level: <8}} | {identifier} {{process}} | {{file.name}}:{{function}}:{{line}} | {{message}}",
+                enqueue=True,
             )
