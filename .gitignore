@@ -3,6 +3,7 @@
 /data
 logs
 plots
+cache
 
 # python-generated files
 __pycache__

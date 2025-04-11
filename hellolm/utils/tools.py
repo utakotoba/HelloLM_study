@@ -18,6 +18,7 @@ def ensure_directory(target):
         logger.exception(e)
     return resolved
 
+
 def generate_run_id():
     now = datetime.now()
     timestamp = now.strftime("%Y_%m_%d_%H_%M_%S")

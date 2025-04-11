@@ -117,12 +117,18 @@ def plot_distribution(payload: dict[str, list], run_id: str):
 
     # Set x and y axis titles for each subplot
     for i in range(1, len(payload) + 1):
-        fig.update_xaxes(title_text="Token Count", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
-        fig.update_yaxes(title_text="Frequency", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
+        fig.update_xaxes(
+            title_text="Token Count", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1
+        )
+        fig.update_yaxes(
+            title_text="Frequency", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1
+        )
 
     # resolve path and save
     viz_path = "plots/preprocessed"
-    plots_path = ensure_directory(viz_path) / f"token_distribution_histogram_{run_id}.html"
+    plots_path = (
+        ensure_directory(viz_path) / f"token_distribution_histogram_{run_id}.html"
+    )
     write_html(fig, plots_path)
     logger.success(f"Plots saved to {plots_path}")
 
@@ -296,7 +302,9 @@ def _main(
     original_bin_count = len(bins)
     bins = [bin for bin in bins if bin[0] >= min_tokens_threshold]
     filtered_bin_count = original_bin_count - len(bins)
-    logger.info(f"Filtered out {filtered_bin_count} bins below {min_tokens_threshold} tokens (95% of target length)")
+    logger.info(
+        f"Filtered out {filtered_bin_count} bins below {min_tokens_threshold} tokens (95% of target length)"
+    )
     logger.success(f"Remaining {len(bins)} bins after filtering")
 
     # plot
@@ -306,7 +314,7 @@ def _main(
             "raw": [item[2] for item in text_metadata],
             "processed": [item[0] for item in bins],
         },
-        run_id=run_id
+        run_id=run_id,
     )
 
     # combine texts

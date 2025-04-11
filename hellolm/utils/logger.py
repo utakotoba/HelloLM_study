@@ -30,7 +30,7 @@ def setup_logger(
         colorize=True,
         filter=lambda record: record["level"].name == "TRACE",
         enqueue=True,
-        level="TRACE"
+        level="TRACE",
     )
     logger.add(
         stderr,
@@ -74,7 +74,6 @@ def setup_logger(
         filter=lambda record: record["level"].name == "CRITICAL",
         enqueue=True,
     )
-    
 
     # set file logger
     if logger_config["log_to_file"]:
@@ -85,9 +84,7 @@ def setup_logger(
             # validate directory stat
             resolved_log_path = logger_config["log_path"].joinpath(run_id)
             ensure_directory(resolved_log_path)
-            resolved_log_file = resolved_log_path.joinpath(
-                f"{run_id}_{identifier}.log"
-            )
+            resolved_log_file = resolved_log_path.joinpath(f"{run_id}_{identifier}.log")
 
             if identifier == "main":
                 logger.info(f"File logging to {resolved_log_path}")
@@ -96,8 +93,8 @@ def setup_logger(
                 resolved_log_file,
                 format=f"{{time:YYYY-MM-DD HH:mm:ss}} | {{level: <8}} | {identifier} {{process}} | {{file.name}}:{{function}}:{{line}} | {{message}}",
                 enqueue=True,
-                filter=lambda record: record['level'].name == "TRACE",
-                level="TRACE"
+                filter=lambda record: record["level"].name == "TRACE",
+                level="TRACE",
             )
             logger.add(
                 resolved_log_file,
