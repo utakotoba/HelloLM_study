@@ -10,3 +10,6 @@ build
 dist
 wheels
 *.egg-info
+
+# os
+.DS_Store
