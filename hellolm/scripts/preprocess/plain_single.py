@@ -1,11 +1,16 @@
 # The script used to preprocess single column plain dataset
 import re
+import math
+import numpy as np
 from pathlib import Path
 from datetime import datetime
 from multiprocessing import Pool
 from argparse import ArgumentParser
 from tiktoken import get_encoding
 from sortedcontainers import SortedDict
+from plotly import graph_objects as go
+from plotly.subplots import make_subplots
+from plotly.io import write_html
 from pyarrow.parquet import ParquetWriter
 from pyarrow import Table, string, schema
 from pandas import DataFrame, read_parquet
@@ -13,6 +18,7 @@ from hellolm.utils.logger import logger, setup_logger
 from hellolm.utils.tools import generate_run_id, ensure_directory
 
 
+# multiple processes unit
 def prepare_unit(
     chunk_data,
     tokenizer_name: str,
@@ -20,6 +26,7 @@ def prepare_unit(
     threshold: int,
     chunk_start: int,
     df_idx: int,
+    # additional tasks
     removes: str,
 ):
     try:
@@ -34,10 +41,14 @@ def prepare_unit(
         if not isinstance(text, str) or not text.strip():
             continue
 
+        # removes some known unused (noise) text pattern in particular dataset (like wikitext)
         if removes:
             text = re.sub(removes, "", text)
 
-        token_count = len(tokenizer.encode(text))
+        # add positional tokens
+        text += "<|endoftext|>"
+
+        token_count = len(tokenizer.encode(text, allowed_special={"<|endoftext|>"}))
 
         if token_count >= threshold:
             result.append((df_idx, chunk_start + idx, token_count, text))
@@ -45,8 +56,75 @@ def prepare_unit(
     return result
 
 
+# multiple processes unit
 def combine_texts(bin_item):
     return "\n".join(bin_item[1])
+
+
+def plot_distribution(payload: dict[str, list]):
+    # build plot titles
+    titles = []
+    for prefix, _ in payload.items():
+        titles.append(f"Distribution of <{prefix}> group")
+
+    fig = make_subplots(rows=math.ceil(len(payload) / 2), cols=2, subplot_titles=titles)
+    for idx, (prefix, data) in enumerate(payload.items()):
+        # Calculate statistics
+        mean = np.mean(data)
+        median = np.median(data)
+        min_val = np.min(data)
+        max_val = np.max(data)
+        std_dev = np.std(data)
+
+        # Add histogram
+        fig.add_trace(
+            go.Histogram(
+                name=prefix,
+                x=data,
+                nbinsx=50,
+                showlegend=True,
+            ),
+            row=(idx // 2) + 1,
+            col=(idx % 2) + 1,
+        )
+
+        # Add statistics as annotations
+        stats_text = (
+            f"Mean: {mean:.2f}<br>"
+            f"Median: {median:.2f}<br>"
+            f"Min: {min_val}<br>"
+            f"Max: {max_val}<br>"
+            f"Std Dev: {std_dev:.2f}"
+        )
+        fig.add_annotation(
+            text=stats_text,
+            showarrow=False,
+            align="left",
+            xref="x domain",
+            yref="y domain",
+            x=0.95,
+            y=0.95,
+            font=dict(size=10),
+            row=(idx // 2) + 1,
+            col=(idx % 2) + 1,
+        )
+
+    fig.update_layout(
+        title="Token Distribution Histograms",
+        template="plotly_white",
+        showlegend=True,
+    )
+
+    # Set x and y axis titles for each subplot
+    for i in range(1, len(payload) + 1):
+        fig.update_xaxes(title_text="Token Count", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
+        fig.update_yaxes(title_text="Frequency", row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
+
+    # resolve path and save
+    viz_path = "plots"
+    plots_path = ensure_directory(viz_path) / "token_distribution_histogram.html"
+    write_html(fig, plots_path)
+    logger.success(f"Plots saved to {plots_path}")
 
 
 @logger.catch
@@ -201,6 +279,15 @@ def _main(
     logger.success(
         f"Created {len(bins)} grouped text segments "
         + f"{metadata_len / (datetime.now() - pack_start_time).total_seconds()} rows/sec"
+    )
+
+    # plot
+    logger.info("Plotting grouped token numbers distribution")
+    plot_distribution(
+        {
+            "raw": [item[2] for item in text_metadata],
+            "processed": [item[0] for item in bins],
+        }
     )
 
     # combine texts
