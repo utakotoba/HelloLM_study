@@ -1,4 +1,5 @@
 # The script used to preprocess single column plain dataset
+import re
 from pathlib import Path
 from datetime import datetime
 from multiprocessing import Pool
@@ -12,13 +13,14 @@ from hellolm.utils.logger import logger, setup_logger
 from hellolm.utils.tools import generate_run_id, ensure_directory
 
 
-def count_tokens_in_chunk(
+def prepare_unit(
     chunk_data,
     tokenizer_name: str,
     column_name: str,
     threshold: int,
     chunk_start: int,
     df_idx: int,
+    removes: str,
 ):
     try:
         tokenizer = get_encoding(tokenizer_name)
@@ -31,6 +33,9 @@ def count_tokens_in_chunk(
     for idx, text in enumerate(chunk_data[column_name]):
         if not isinstance(text, str) or not text.strip():
             continue
+
+        if removes:
+            text = re.sub(removes, "", text)
 
         token_count = len(tokenizer.encode(text))
 
@@ -49,6 +54,7 @@ def _main(
     inputs: str,
     prefix: str,
     output_path: str,
+    removes: str,
     tokenizer_name: str,
     column_name: str,
     threshold: int,
@@ -110,10 +116,18 @@ def _main(
             for chunk_start in range(0, len(df), batch_size):
                 chunk = df.iloc[chunk_start : chunk_start + batch_size]
                 chunks.append(
-                    (chunk, tokenizer_name, column_name, threshold, chunk_start, df_idx)
+                    (
+                        chunk,
+                        tokenizer_name,
+                        column_name,
+                        threshold,
+                        chunk_start,
+                        df_idx,
+                        removes,
+                    )
                 )
 
-            results = pool.starmap(count_tokens_in_chunk, chunks)
+            results = pool.starmap(prepare_unit, chunks)
 
             for chunk_results in results:
                 for df_idx, row_idx, token_count, text in chunk_results:
@@ -241,6 +255,12 @@ if __name__ == "__main__":
         default="cl100k_base",
     )
     process_options.add_argument(
+        "--removes",
+        "-e",
+        type=str,
+        help="regex pattern to exclude some words from the data",
+    )
+    process_options.add_argument(
         "--column",
         "-c",
         type=str,
@@ -282,6 +302,7 @@ if __name__ == "__main__":
         prefix=args.prefix,
         output_path=args.output,
         tokenizer_name=args.tokenizer,
+        removes=args.removes,
         column_name=args.column,
         threshold=args.threshold,
         target_length=args.target_length,
